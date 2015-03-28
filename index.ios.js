@@ -5,7 +5,14 @@
 'use strict';
 
 var React = require('react-native');
-var { AppRegistry, Image, StyleSheet, Text, View, } = React;
+var { 
+  AppRegistry, 
+  Image, 
+  StyleSheet, 
+  Text, 
+  View, 
+  ListView,
+} = React;
 
 
 var API_KEY = 'wgcxhbxsrzrmjnzmh4d3hnbg'; 
@@ -29,7 +36,12 @@ var MOCKED_MOVIES_DATA = [
 
 var AwesomeProject = React.createClass({
   getInitialState: function() { 
-    return { movies: null, }; 
+    return { 
+      dataSource: new ListView.DataSource({ 
+        rowHasChanged: (row1, row2) => row1 !== row2, 
+      }), 
+      loaded: false, 
+    };
   },
   componentDidMount: function() { 
     this.fetchData(); 
@@ -38,10 +50,10 @@ var AwesomeProject = React.createClass({
     fetch(REQUEST_URL) 
     .then((response) => response.json()) 
     .then((responseData) => { 
-      this.setState({ 
-        movies: responseData.movies, 
-        error: responseData.error, 
-      }); 
+       this.setState({ 
+        dataSource: this.state.dataSource.cloneWithRows(responseData.movies), 
+        loaded: true, 
+      });
     }) 
     .done(); 
   },
@@ -49,11 +61,18 @@ var AwesomeProject = React.createClass({
     console.log(this.state.movies);
     if(this.state.error) {
       return this.renderErrorView();
-    } else if (!this.state.movies) { 
+    } else if (!this.state.loaded) { 
       return this.renderLoadingView(); 
     }
-    var movie = this.state.movies[0]; 
-    return this.renderMovie(movie); 
+    
+    return ( 
+      <ListView 
+        dataSource={this.state.dataSource} 
+        renderRow={this.renderMovie} 
+        style={styles.listView} /> 
+
+    );
+
   },
   renderLoadingView: function() { 
     return ( 
@@ -83,6 +102,10 @@ var AwesomeProject = React.createClass({
 });
 
 var styles = StyleSheet.create({
+  listView: { 
+    paddingTop: 20, 
+    backgroundColor: '#F5FCFF', 
+  },
   container: { 
     flex: 1, 
     flexDirection: 'row', 
